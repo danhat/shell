@@ -18,34 +18,34 @@ char *read_line() {
   return line;
 }
 
-char **split_line_into_commands(char *line) {
+char **split_line(char *line) {
   int position = 0;
   int buffer_size = 64;
  
-  char **commands = malloc(buffer_size * sizeof(char *));
+  char **arguments = malloc(buffer_size * sizeof(char *));
 
-  char *command = strtok(line, ";");
-  while (command) {
-    commands[position] = command;
+  char *argument = strtok(line, " ");
+  while (argument) {
+    arguments[position] = argument;
     position++;
     if (position >= buffer_size) {
       buffer_size += 64;
-      commands = realloc(commands, buffer_size * sizeof(char *));
-      if (!commands) {
+      arguments = realloc(arguments, buffer_size * sizeof(char *));
+      if (!arguments) {
         fprintf(stderr, "allocation error/n");
-        exit(EXIT_FAILURE);
+        exit(-1);
       }
     }
 
-    command = strtok(NULL, ";");
+    argument = strtok(NULL, " ");
   }
-  commands[position] = NULL;
+  arguments[position] = NULL;
 
   int i;
   for (i = 0; i < position; i++) 
-    printf("commands[%i]: %s\n", i, commands[i]);
+    printf("arguments[%i]: %s\n", i, arguments[i]);
 
-  return commands;
+  return arguments;
 
 }
 
@@ -55,9 +55,9 @@ int execute(char **arguments) {
     return 1;
   }
 
-  //if (strcmp(arguments[0], "help") == 0) {
-    //printf("\nDanielle Hatten's Shell\n");
-  //}
+  if (strcmp(arguments[0], "help") == 0) {
+    printf("\nDanielle Hatten's Shell\n");
+  }
 
   if (strcmp(arguments[0], "exit") == 0) {
     free(arguments);
@@ -69,12 +69,12 @@ int execute(char **arguments) {
 
   pid = fork();
   if (pid < 0) {
-    // print error
+    // fork failed
     free(arguments);
     exit(-1);
   }
   else if (pid == 0) { // child
-    if (execvpe(arguments[0], arguments) == -1) {
+    if (execv(arguments[0], arguments) == -1) {
       // print error
     }
   } 
@@ -94,18 +94,17 @@ int execute(char **arguments) {
 
 void shell() {
   char *line;
-  char **commands;  
-  int status;
-  int i;
+  char **arguments;  
+ 
   while(1) {
     printf("CS361 > ");
     line = read_line();
     
-    commands = split_line_into_commands(line);
-    status = execute(commands);
+    arguments = split_line(line);
+    execute(arguments);
 
     free(line);
-    free(commands);
+    free(arguments);
   }
 
 }
@@ -113,13 +112,13 @@ void shell() {
 void sigint_handler(int sig) {
   char message[] = " caught sigint\nCS361 > ";
   write(1, message, sizeof(message));
-  shell();
+  //shell();
 }
 
 void sigtstp_handler(int sig) {
   char message[] = " caught sigstp\nCS361 > ";
   write(1, message, sizeof(message));
-  shell();
+  //shell();
 }
 
 
@@ -129,6 +128,7 @@ int main() {
   signal(SIGTSTP, sigtstp_handler);
 
   shell();  
-  
+  return 0;
+ 
 }
 
