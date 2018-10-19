@@ -106,14 +106,14 @@ int execute(char **arguments, int num_of_args) {
       }
     }*/
     execv(arguments[0], arguments);
-    //printf("pid:%d status:%d\n", getpid(), status);
+    printf("pid:%d status:%d\n", getpid(), status);
     //exit(1);
 
 
   } 
   else { // parent
     wpid = waitpid(pid, &status, WUNTRACED);
-    printf("pid:%d status:%d\n", getpid(), status);
+    //printf("pid:%d status:%d\n", getpid(), status);
   }
   //printf("pid:%d status:%d\n", getpid(), status);
 
@@ -122,16 +122,7 @@ int execute(char **arguments, int num_of_args) {
 
 }
 
-void free_args(char **args) {
-  char *temp = args[0];
 
-  while(temp) {
-    free(temp);
-    temp++;
-  }
-
-  free(args);
-}
 
 void shell() {
   char *line = NULL;
@@ -152,7 +143,7 @@ void shell() {
       // separator found and there is more than one command
       //printf("*** separator found ***\n");
       // separate commands
-      char *command = strtok(line, " ;\n ");
+      char *command = strtok(line, "; ");
       
       while(command != NULL) {
         //printf("*** command: %s ***\n", command);
@@ -162,7 +153,7 @@ void shell() {
         status = execute(arguments, n);
         free(arguments);
         // get next command
-        command = strtok(NULL, " ;\n ");
+        command = strtok(NULL, "\n");
       }
      
     }
