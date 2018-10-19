@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define DELIM " \t\n\a"
 
 char *get_line() {
   char *line = NULL;
@@ -22,13 +23,15 @@ char *get_line() {
   return line;
 }
 
+
 char **get_arguments(char *command) {
   int position = 0;
   int buffer_size = 32;
+  const char space[2] = " ";
  
-  char **arguments = (char **)malloc(buffer_size * sizeof(char *));
+  char **arguments = malloc(buffer_size * sizeof(char *));
 
-  char *argument = strtok(command, " ");
+  char *argument = strtok(command, DELIM);
   while (argument != NULL) {
     arguments[position] = argument;
     position++;
@@ -37,14 +40,16 @@ char **get_arguments(char *command) {
       arguments = realloc(arguments, buffer_size * sizeof(char *));
     }
     // get next argument
-    argument = strtok(NULL, " ");
+    argument = strtok(NULL, DELIM);
   }
+  position++;
   arguments[position] = (char *)0;
 
-  /*int i;
+  int i;
+  // print statement for debugging
   for (i = 0; i < position; i++) 
-    printf("arguments[%i]: %s\n", i, arguments[i]);*/
-
+    printf("arguments[%i]: %s\n", i, arguments[i]);
+  
   return arguments;
 
 }
@@ -71,37 +76,35 @@ int execute(char **arguments, int num_of_args) {
   }
 
   if (strcmp(arguments[0], "exit") == 0) {
-    free(arguments);
-    //exit(0);
-    return -1;
+    exit(0);
   }
 
   pid_t pid, wpid;
-  int status, i;
+  int status, i, file;
 
   pid = fork();
   if (pid == 0) { // child 
     // check for redirection
-    for (i = 1; i < num_of_args - 1; i++) {
+    /*for (i = 1; i < num_of_args - 1; i++) {
       char *file = arguments[i + 1];
       if (strcmp(arguments[i], ">") == 0) {
         // open output file
-        int file = open(arguments[i+1], O_RDWR|O_CREAT);
+        file = open(arguments[i+1], O_RDWR|O_CREAT);
         // replace output with output file
         dup2(file, 1);
         // close file descriptor
         close(file);
         //execv(arguments[0], arguments);
-        break;
+        //break;
       }
       else if (strcmp(arguments[i], "<") == 0) {
-        int file = open(arguments[i+1], O_RDONLY);
+        file = open(arguments[i+1], O_RDONLY);
         dup2(file, 0);
         close(file);
         //execv(arguments[0], arguments);
-        break;
+        //break;
       }
-    }
+    }*/
     execv(arguments[0], arguments);
     //printf("pid:%d status:%d\n", getpid(), status);
     //exit(1);
@@ -119,6 +122,16 @@ int execute(char **arguments, int num_of_args) {
 
 }
 
+void free_args(char **args) {
+  char *temp = args[0];
+
+  while(temp) {
+    free(temp);
+    temp++;
+  }
+
+  free(args);
+}
 
 void shell() {
   char *line = NULL;
@@ -130,26 +143,33 @@ void shell() {
   while(status) {
     printf("CS361 > ");
     line = get_line();
-    char *line2 = line; 
+    char *line2 = line;
+    const char sc = ';';
+    printf("*** line: %s ***\n", line);
+    printf("*** line2: %s ***\n", line2);
     // check if there is more than one command
-    if (strchr(line2, ';')) {
+    if (strchr(line2, sc) != NULL) {
+      // separator found and there is more than one command
+      printf("*** separator found ***\n");
       // separate commands
-      char *command = strtok(line, ";");
+      char *command = strtok(line, " ;\n ");
       
-      // print statement for debugging
-      // printf("command: %s\n", command);
       while(command != NULL) {
+        printf("*** command: %s ***\n", command);
         // get arguments for command and then execute command
         arguments = get_arguments(command);
         n = num_of_args(command);
         status = execute(arguments, n);
+        free(arguments);
         // get next command
-        command = strtok(NULL, ";");
+        command = strtok(NULL, " ;\n ");
       }
+     
     }
-    // else, there is one command to execute
+
+    // else, there is only one command to execute
     else {
-      
+      printf("*** only one command ***\n");
       arguments = get_arguments(line);
       n = num_of_args(line);
       status = execute(arguments, n);
