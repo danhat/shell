@@ -45,7 +45,7 @@ char **get_arguments(char *command) {
 
 }
 
-int num_of_args(char **line) {
+int num_of_args(char *line) {
   int count = 0;
   char *arg = strtok(line, " ");
   while(arg != NULL) {
@@ -57,7 +57,7 @@ int num_of_args(char **line) {
 }
 
 
-int execute(char **arguments, num_of_args) {
+int execute(char **arguments, int num_of_args) {
   if (arguments[0] == NULL) {
     return 1;
   }
@@ -112,6 +112,7 @@ void shell() {
   char *command;
   char **arguments;   
   int status = 1;
+  int n; 
 
   while(status) {
     printf("CS361 > ");
@@ -127,15 +128,18 @@ void shell() {
       while(command != NULL) {
         // get arguments for command and then execute command
         arguments = get_arguments(command);
-        status = execute(arguments);
+        n = num_of_args(command);
+        status = execute(arguments, n);
         // get next command
         command = strtok(NULL, ";");
       }
     }
     // else, there is one command to execute
     else {
+      
       arguments = get_arguments(line);
-      status = execute(arguments);
+      n = num_of_args(line);
+      status = execute(arguments, n);
     }
  
   }
