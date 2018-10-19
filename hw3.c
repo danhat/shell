@@ -85,7 +85,7 @@ int execute(char **arguments, int num_of_args) {
   pid = fork();
   if (pid == 0) { // child 
     // check for redirection
-    /*for (i = 1; i < num_of_args - 1; i++) {
+    for (i = 1; i < num_of_args - 1; i++) {
       char *file = arguments[i + 1];
       if (strcmp(arguments[i], ">") == 0) {
         // open output file
@@ -104,9 +104,9 @@ int execute(char **arguments, int num_of_args) {
         //execv(arguments[0], arguments);
         //break;
       }
-    }*/
+    }
     execv(arguments[0], arguments);
-    printf("pid:%d status:%d\n", getpid(), status);
+    //printf("pid:%d status:%d\n", getpid(), status);
     //exit(1);
 
 
@@ -115,7 +115,7 @@ int execute(char **arguments, int num_of_args) {
     wpid = waitpid(pid, &status, WUNTRACED);
     //printf("pid:%d status:%d\n", getpid(), status);
   }
-  //printf("pid:%d status:%d\n", getpid(), status);
+  printf("pid:%d status:%d\n", getpid(), status);
 
   return 1;
 
