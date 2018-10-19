@@ -11,39 +11,35 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-char *read_line() {
+char *get_line() {
   char *line = NULL;
   ssize_t buffer_size = 0;
   getline(&line, &buffer_size, stdin);
   return line;
 }
 
-char **split_line(char *line) {
+char **get_arguments(char *command) {
   int position = 0;
-  int buffer_size = 64;
+  int buffer_size = 32;
  
   char **arguments = malloc(buffer_size * sizeof(char *));
 
-  char *argument = strtok(line, " ");
+  char *argument = strtok(command, " ");
   while (argument) {
     arguments[position] = argument;
     position++;
     if (position >= buffer_size) {
-      buffer_size += 64;
+      buffer_size += 32;
       arguments = realloc(arguments, buffer_size * sizeof(char *));
-      if (!arguments) {
-        fprintf(stderr, "allocation error/n");
-        exit(-1);
-      }
     }
-
+    // get next argument
     argument = strtok(NULL, " ");
   }
-  arguments[position] = NULL;
+  arguments[position] = (char *)0;
 
-  int i;
+  /*int i;
   for (i = 0; i < position; i++) 
-    printf("arguments[%i]: %s\n", i, arguments[i]);
+    printf("arguments[%i]: %s\n", i, arguments[i]);*/
 
   return arguments;
 
@@ -61,30 +57,26 @@ int execute(char **arguments) {
 
   if (strcmp(arguments[0], "exit") == 0) {
     free(arguments);
-    exit(0);
+    //exit(0);
+    return -1;
   }
 
   pid_t pid, wpid;
   int status;
 
   pid = fork();
-  if (pid < 0) {
-    // fork failed
-    free(arguments);
-    exit(-1);
-  }
-  else if (pid == 0) { // child
-    if (execv(arguments[0], arguments) == -1) {
-      // print error
-    }
+  if (pid == 0) { // child 
+    execv(arguments[0], arguments);
+    //printf("pid:%d status:%d\n", getpid(), status);
+    //exit(1);
   } 
   else { // parent
-    do {
-      wpid = waitpid(pid, &status, WUNTRACED);
-    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-  
+    //do {
+    wpid = waitpid(pid, &status, WUNTRACED);
+    //} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    printf("pid:%d status:%d\n", getpid(), status);
   }
-  printf("pid:%d status:%d\n", getpid(), status);
+  //printf("pid:%d status:%d\n", getpid(), status);
 
   return 1;
 
@@ -93,32 +85,50 @@ int execute(char **arguments) {
 
 
 void shell() {
-  char *line;
-  char **arguments;  
- 
-  while(1) {
-    printf("CS361 > ");
-    line = read_line();
-    
-    arguments = split_line(line);
-    execute(arguments);
+  char *line = NULL;
+  char *command;
+  char **arguments;   
+  int status = 1;
 
-    free(line);
-    free(arguments);
+  while(status) {
+    printf("CS361 > ");
+    line = get_line();
+    
+    // check if there is more than one command
+    if (strchr(line, ';')) {
+      // separate commands
+      char *command = strtok(line, ";");
+      
+      // print statement for debugging
+      // printf("command: %s\n", command);
+      while(command != NULL) {
+        // get arguments for command and then execute command
+        arguments = get_arguments(command);
+        status = execute(arguments);
+        // get next command
+        command = strtok(NULL, ";");
+      }
+    }
+    // else, there is one command to execute
+    else {
+      arguments = get_arguments(line);
+      status = execute(arguments);
+    }
+ 
   }
+  
+  free(arguments);
 
 }
 
 void sigint_handler(int sig) {
   char message[] = " caught sigint\nCS361 > ";
   write(1, message, sizeof(message));
-  //shell();
 }
 
 void sigtstp_handler(int sig) {
   char message[] = " caught sigstp\nCS361 > ";
   write(1, message, sizeof(message));
-  //shell();
 }
 
 
@@ -128,7 +138,7 @@ int main() {
   signal(SIGTSTP, sigtstp_handler);
 
   shell();  
-  return 0;
+  return 1;
  
 }
 
