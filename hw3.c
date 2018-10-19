@@ -22,10 +22,10 @@ char **get_arguments(char *command) {
   int position = 0;
   int buffer_size = 32;
  
-  char **arguments = malloc(buffer_size * sizeof(char *));
+  char **arguments = (char **)malloc(buffer_size * sizeof(char *));
 
   char *argument = strtok(command, " ");
-  while (argument) {
+  while (argument != NULL) {
     arguments[position] = argument;
     position++;
     if (position >= buffer_size) {
@@ -45,8 +45,19 @@ char **get_arguments(char *command) {
 
 }
 
+int num_of_args(char **line) {
+  int count = 0;
+  char *arg = strtok(line, " ");
+  while(arg != NULL) {
+    count++;
+    arg = strtok(NULL, " ");
+  }
+  
+  return count;
+}
 
-int execute(char **arguments) {
+
+int execute(char **arguments, num_of_args) {
   if (arguments[0] == NULL) {
     return 1;
   }
@@ -62,18 +73,30 @@ int execute(char **arguments) {
   }
 
   pid_t pid, wpid;
-  int status;
+  int status, i;
 
   pid = fork();
   if (pid == 0) { // child 
+    // check for redirection
+    for (i = 1; i < num_of_args - 1; i++) {
+      char *file = arguments[i + 1];
+      if (strcmp(arguments[i], ">") == 0) {
+        freopen(file, "w", stdout);
+        break;
+      }
+      else if (strcmp(arguments[i], "<") == 0) {
+        freopen(file, "r", stdin);
+        break;
+      }
+    }
     execv(arguments[0], arguments);
     //printf("pid:%d status:%d\n", getpid(), status);
     //exit(1);
+
+
   } 
   else { // parent
-    //do {
     wpid = waitpid(pid, &status, WUNTRACED);
-    //} while (!WIFEXITED(status) && !WIFSIGNALED(status));
     printf("pid:%d status:%d\n", getpid(), status);
   }
   //printf("pid:%d status:%d\n", getpid(), status);
@@ -93,7 +116,7 @@ void shell() {
   while(status) {
     printf("CS361 > ");
     line = get_line();
-    
+    printf("line: %s\n", line); 
     // check if there is more than one command
     if (strchr(line, ';')) {
       // separate commands
