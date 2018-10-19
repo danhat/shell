@@ -10,6 +10,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 char *get_line() {
   char *line = NULL;
@@ -81,11 +85,20 @@ int execute(char **arguments, int num_of_args) {
     for (i = 1; i < num_of_args - 1; i++) {
       char *file = arguments[i + 1];
       if (strcmp(arguments[i], ">") == 0) {
-        freopen(file, "w", stdout);
+        // open output file
+        int file = open(arguments[i+1], O_RDWR|O_CREAT);
+        // replace output with output file
+        dup2(file, 1);
+        // close file descriptor
+        close(file);
+        //execv(arguments[0], arguments);
         break;
       }
       else if (strcmp(arguments[i], "<") == 0) {
-        freopen(file, "r", stdin);
+        int file = open(arguments[i+1], O_RDONLY);
+        dup2(file, 0);
+        close(file);
+        //execv(arguments[0], arguments);
         break;
       }
     }
@@ -117,9 +130,9 @@ void shell() {
   while(status) {
     printf("CS361 > ");
     line = get_line();
-    printf("line: %s\n", line); 
+    char *line2 = line; 
     // check if there is more than one command
-    if (strchr(line, ';')) {
+    if (strchr(line2, ';')) {
       // separate commands
       char *command = strtok(line, ";");
       
