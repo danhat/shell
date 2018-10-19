@@ -47,9 +47,9 @@ char **get_arguments(char *command) {
 
   int i;
   // print statement for debugging
-  for (i = 0; i < position; i++) 
+  /*for (i = 0; i < position; i++) 
     printf("arguments[%i]: %s\n", i, arguments[i]);
-  
+  */
   return arguments;
 
 }
@@ -71,11 +71,11 @@ int execute(char **arguments, int num_of_args) {
     return 1;
   }
 
-  if (strcmp(arguments[0], "help") == 0) {
+  if (strcmp(arguments[0], "help\n") == 0) {
     printf("\nDanielle Hatten's Shell\n");
   }
 
-  if (strcmp(arguments[0], "exit") == 0) {
+  if (strcmp(arguments[0], "exit\n") == 0) {
     exit(0);
   }
 
@@ -145,17 +145,17 @@ void shell() {
     line = get_line();
     char *line2 = line;
     const char sc = ';';
-    printf("*** line: %s ***\n", line);
-    printf("*** line2: %s ***\n", line2);
+    //printf("*** line: %s ***\n", line);
+    //printf("*** line2: %s ***\n", line2);
     // check if there is more than one command
     if (strchr(line2, sc) != NULL) {
       // separator found and there is more than one command
-      printf("*** separator found ***\n");
+      //printf("*** separator found ***\n");
       // separate commands
       char *command = strtok(line, " ;\n ");
       
       while(command != NULL) {
-        printf("*** command: %s ***\n", command);
+        //printf("*** command: %s ***\n", command);
         // get arguments for command and then execute command
         arguments = get_arguments(command);
         n = num_of_args(command);
@@ -169,7 +169,7 @@ void shell() {
 
     // else, there is only one command to execute
     else {
-      printf("*** only one command ***\n");
+      //printf("*** only one command ***\n");
       arguments = get_arguments(line);
       n = num_of_args(line);
       status = execute(arguments, n);
@@ -182,12 +182,12 @@ void shell() {
 }
 
 void sigint_handler(int sig) {
-  char message[] = " caught sigint\nCS361 > ";
+  char message[] = "\ncaught sigint\nCS361 > ";
   write(1, message, sizeof(message));
 }
 
 void sigtstp_handler(int sig) {
-  char message[] = " caught sigstp\nCS361 > ";
+  char message[] = "\ncaught sigstp\nCS361 > ";
   write(1, message, sizeof(message));
 }
 
