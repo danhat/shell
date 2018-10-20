@@ -142,7 +142,7 @@ void shell() {
   int status = 1;
   int n; 
 
-  while(status) {
+  while(status >= 0) {
     printf("CS361 > ");
     line = get_line();
     char *line2 = line;
