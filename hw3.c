@@ -72,11 +72,11 @@ int execute(char **arguments, int num_of_args) {
   }
 
   if (strcmp(arguments[0], "help") == 0) {
-    printf("\nDanielle Hatten's Shell\n");
+    printf("\n*** Danielle Hatten's Shell ***\n");
+    return 1;
   }
 
   if (strcmp(arguments[0], "exit") == 0) {
-    //exit(0);
     return -1;
   }
 
@@ -84,29 +84,34 @@ int execute(char **arguments, int num_of_args) {
   int status;
   int i;
 
-  // intput file, output file for redirection
+  // intput fd, output fd for redirection
   int infile, outfile;
 
   // variables to keep track of files that are opened
   int in_open = 0;
   int out_open = 0;
 
+  char *buf = malloc(200);
+  int size = 200;
+
   pid = fork();
   if (pid == 0) { // child 
     // check for redirection
     for (i = 1; i < num_of_args - 1; i++) {
       if (strcmp(arguments[i], ">") == 0) {
-        // open output file
+        // open output file descriptor
         outfile = open(arguments[i+1], O_RDWR|O_CREAT);
         // replace output with output file
         dup2(outfile, 1);
+        write(outfile, buf, size);
         out_open = 1;
       }
       else if (strcmp(arguments[i], "<") == 0) {
-        // open input file
+        // open input file descripter
         infile = open(arguments[i+1], O_RDONLY);
         // replace stdin with input file
         dup2(infile, 0);
+        read(infile, buf, size);
         in_open = 1;
       }
     }
@@ -114,11 +119,12 @@ int execute(char **arguments, int num_of_args) {
       char msg[] = "could not execute command\nCS361 > ";
       write(1, msg, sizeof(msg));
     }
-    // if output or input files are open, close them
+    // if output or input file descriptors are open, close them
     if (in_open == 1) 
       close(infile);
     if (out_open == 1)
       close(outfile);
+
     exit(0);
  
   } 
