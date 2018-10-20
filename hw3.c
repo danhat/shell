@@ -71,51 +71,62 @@ int execute(char **arguments, int num_of_args) {
     return 1;
   }
 
-  if (strcmp(arguments[0], "help\n") == 0) {
+  if (strcmp(arguments[0], "help") == 0) {
     printf("\nDanielle Hatten's Shell\n");
   }
 
-  if (strcmp(arguments[0], "exit\n") == 0) {
-    exit(0);
+  if (strcmp(arguments[0], "exit") == 0) {
+    //exit(0);
+    return -1;
   }
 
   pid_t pid, wpid;
-  int status, i, file;
+  int status;
+  int i;
+
+  // intput file, output file for redirection
+  int infile, outfile;
+
+  // variables to keep track of files that are opened
+  int in_open = 0;
+  int out_open = 0;
 
   pid = fork();
   if (pid == 0) { // child 
     // check for redirection
     for (i = 1; i < num_of_args - 1; i++) {
-      char *file = arguments[i + 1];
       if (strcmp(arguments[i], ">") == 0) {
         // open output file
-        file = open(arguments[i+1], O_RDWR|O_CREAT);
+        outfile = open(arguments[i+1], O_RDWR|O_CREAT);
         // replace output with output file
-        dup2(file, 1);
-        // close file descriptor
-        close(file);
-        //execv(arguments[0], arguments);
-        //break;
+        dup2(outfile, 1);
+        out_open = 1;
       }
       else if (strcmp(arguments[i], "<") == 0) {
-        file = open(arguments[i+1], O_RDONLY);
-        dup2(file, 0);
-        close(file);
-        //execv(arguments[0], arguments);
-        //break;
+        // open input file
+        infile = open(arguments[i+1], O_RDONLY);
+        // replace stdin with input file
+        dup2(infile, 0);
+        in_open = 1;
       }
     }
-    execv(arguments[0], arguments);
-    //printf("pid:%d status:%d\n", getpid(), status);
-    //exit(1);
-
-
+    if (execv(arguments[0], arguments) < 0) {
+      char msg[] = "could not execute command\nCS361 > ";
+      write(1, msg, sizeof(msg));
+    }
+    // if output or input files are open, close them
+    if (in_open == 1) 
+      close(infile);
+    if (out_open == 1)
+      close(outfile);
+    exit(0);
+ 
   } 
   else { // parent
     wpid = waitpid(pid, &status, WUNTRACED);
-    //printf("pid:%d status:%d\n", getpid(), status);
+    printf("pid:%d status:%d\n", wpid, status);
   }
-  printf("pid:%d status:%d\n", getpid(), status);
+  
 
   return 1;
 
@@ -136,16 +147,15 @@ void shell() {
     line = get_line();
     char *line2 = line;
     const char sc = ';';
-    //printf("*** line: %s ***\n", line);
-    //printf("*** line2: %s ***\n", line2);
+    
     // check if there is more than one command
     if (strchr(line2, sc) != NULL) {
       // separator found and there is more than one command
       //printf("*** separator found ***\n");
       // separate commands
-      char *command = strtok(line, "; ");
+      char *command = strtok(line, ";");
       
-      while(command != NULL) {
+      while(command) {
         //printf("*** command: %s ***\n", command);
         // get arguments for command and then execute command
         arguments = get_arguments(command);
@@ -153,7 +163,7 @@ void shell() {
         status = execute(arguments, n);
         free(arguments);
         // get next command
-        command = strtok(NULL, "\n");
+        command = strtok(NULL, ";\n\t\v\f\r");
       }
      
     }
