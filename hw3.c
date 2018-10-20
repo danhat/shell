@@ -103,7 +103,8 @@ int execute(char **arguments, int num_of_args) {
         outfile = open(arguments[i+1], O_RDWR|O_CREAT);
         // replace output with output file
         dup2(outfile, 1);
-        write(outfile, buf, size);
+        close(outfile);
+        //write(outfile, buf, size);
         out_open = 1;
       }
       else if (strcmp(arguments[i], "<") == 0) {
@@ -111,7 +112,8 @@ int execute(char **arguments, int num_of_args) {
         infile = open(arguments[i+1], O_RDONLY);
         // replace stdin with input file
         dup2(infile, 0);
-        read(infile, buf, size);
+        close(infile);
+        //read(infile, buf, size);
         in_open = 1;
       }
     }
@@ -120,10 +122,10 @@ int execute(char **arguments, int num_of_args) {
       write(1, msg, sizeof(msg));
     }
     // if output or input file descriptors are open, close them
-    if (in_open == 1) 
+    /*if (in_open == 1) 
       close(infile);
     if (out_open == 1)
-      close(outfile);
+      close(outfile);*/
 
     exit(0);
  
