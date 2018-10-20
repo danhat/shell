@@ -129,7 +129,9 @@ int execute(char **arguments, int num_of_args) {
  
   } 
   else { // parent
-    wpid = waitpid(pid, &status, WUNTRACED);
+    do {
+      wpid = waitpid(pid, &status, WUNTRACED);
+    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     printf("pid:%d status:%d\n", wpid, status);
   }
   
@@ -151,11 +153,10 @@ void shell() {
   while(status >= 0) {
     printf("CS361 > ");
     line = get_line();
-    char *line2 = line;
     const char sc = ';';
     
     // check if there is more than one command
-    if (strchr(line2, sc) != NULL) {
+    if (strchr(line, sc) != NULL) {
       // separator found and there is more than one command
       //printf("*** separator found ***\n");
       // separate commands
@@ -169,7 +170,7 @@ void shell() {
         status = execute(arguments, n);
         free(arguments);
         // get next command
-        command = strtok(NULL, ";\n\t\v\f\r");
+        command = strtok(NULL, ";\n\t\v\f\r\0");
       }
      
     }
@@ -205,7 +206,7 @@ int main() {
   signal(SIGTSTP, sigtstp_handler);
 
   shell();  
-  return 1;
+  return 0;
  
 }
 
